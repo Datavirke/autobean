@@ -32,7 +32,7 @@ fn find_duplicates<'a>(directives: &[Sourced<'a, Directive<'a>>]) {
         println!(
             "{} identical transaction {} found in multiple locations:",
             "warning:".yellow().bold(),
-            txn.payee.as_deref().unwrap_or_default().bold()
+            txn.payee.as_deref().unwrap_or_default().bold().green()
         );
 
         for source in sources.into_iter().to_span(10) {
