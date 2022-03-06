@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
     fmt::{Debug, Display},
+    hash::Hash,
     path::{Path, PathBuf},
 };
 
@@ -15,7 +16,7 @@ pub struct LedgerFile {
     pub source: String,
 }
 
-impl std::hash::Hash for LedgerFile {
+impl Hash for LedgerFile {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.path.hash(state);
     }
@@ -36,9 +37,27 @@ impl Debug for LedgerFile {
     }
 }
 
+#[derive(Clone)]
 pub struct Sourced<'a, T> {
     pub inner: T,
     pub location: Location<'a>,
+}
+
+impl<'a, T> Eq for Sourced<'a, T> {
+    fn assert_receiver_is_total_eq(&self) {}
+}
+
+impl<'a, T> PartialEq for Sourced<'a, T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.location == other.location
+    }
+}
+
+impl<'a, T> Hash for Sourced<'a, T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        // Only hash location, since we assume that must be unique
+        self.location.hash(state);
+    }
 }
 
 impl<'a, T> Display for Sourced<'a, T> {

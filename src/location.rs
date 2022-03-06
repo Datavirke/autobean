@@ -15,6 +15,36 @@ pub struct Location<'a> {
     end_line: usize,
 }
 
+impl<'a> PartialOrd for Location<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match self.file.path.partial_cmp(&other.file.path) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+        match self.start_line.partial_cmp(&other.start_line) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+        self.end_line.partial_cmp(&other.end_line)
+    }
+}
+
+impl<'a> Ord for Location<'a> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.file.path.cmp(&other.file.path) {
+            Ordering::Equal => {}
+            x => return x,
+        }
+
+        match self.start_line.cmp(&other.start_line) {
+            Ordering::Equal => {}
+            x => return x,
+        }
+
+        self.end_line.cmp(&other.end_line)
+    }
+}
+
 impl<'a> Location<'a> {
     pub fn from(file: &'a LedgerFile, start_line: usize, end_line: usize) -> Self {
         Self {
