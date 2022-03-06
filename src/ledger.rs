@@ -1,5 +1,4 @@
 use std::{
-    cmp::{max, min},
     collections::HashMap,
     fmt::{Debug, Display},
     path::{Path, PathBuf},
@@ -7,82 +6,44 @@ use std::{
 
 use beancount_core::Directive;
 use beancount_parser::parse;
-use chrono::Local;
 
-use crate::error::Error;
+use crate::{error::Error, location::Location};
 
-struct LedgerFile {
-    path: PathBuf,
-    source: String,
+#[derive(Eq)]
+pub struct LedgerFile {
+    pub path: PathBuf,
+    pub source: String,
+}
+
+impl std::hash::Hash for LedgerFile {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.path.hash(state);
+    }
+}
+
+impl PartialEq for LedgerFile {
+    fn eq(&self, other: &Self) -> bool {
+        self.path == other.path
+    }
 }
 
 impl Debug for LedgerFile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Omit the 'source' string, since it's usually very large.
         f.debug_struct("LedgerFile")
             .field("path", &self.path)
             .finish()
     }
 }
 
-#[derive(Debug)]
-struct Location<'a> {
-    file: &'a LedgerFile,
-    line_number: usize,
-}
-
-impl<'a> Location<'a> {
-    pub fn with_context(&'a self, lines_context: usize) -> LocationContext<'a> {
-        LocationContext {
-            location: &self,
-            lines_context,
-        }
-    }
-}
-
-impl<'a> Display for Location<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let line = self.file.source.lines().nth(self.line_number).unwrap();
-
-        writeln!(f, "* {: >6} | {}", self.line_number, line)
-    }
-}
-
-struct LocationContext<'a> {
-    location: &'a Location<'a>,
-    lines_context: usize,
-}
-
-impl<'a> Display for LocationContext<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (line_number, line) in self
-            .location
-            .file
-            .source
-            .lines()
-            .enumerate()
-            .skip(max(self.lines_context, self.location.line_number) - self.lines_context)
-            .take(self.lines_context * 2 + 1)
-        {
-            if line_number == self.location.line_number {
-                writeln!(f, "* {: >6} | {}", line_number, line)?;
-            } else {
-                writeln!(f, "  {: >6} | {}", line_number, line)?;
-            }
-        }
-
-        Ok(())
-    }
-}
-
-#[derive(Debug)]
 pub struct Sourced<'a, T> {
-    directive: T,
-    location: Location<'a>,
+    pub inner: T,
+    pub location: Location<'a>,
 }
 
-impl<'a, T: Debug> Display for Sourced<'a, T> {
+impl<'a, T> Display for Sourced<'a, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.location.with_context(2))
+        write!(f, "{}", self.location.with_context(1))
     }
 }
 
@@ -117,7 +78,6 @@ impl Ledger {
 
     pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
         let mut ledgers = Vec::new();
-        //let mut imports = Vec::new();
 
         for file in Self::list_files(path.as_ref())? {
             if let Some(ext) = file.extension() {
@@ -153,7 +113,7 @@ impl LedgerFile {
             .unwrap();
 
         // We use this hashmap to keep track of each occurrence of a directive.
-        // In the case that identical directive occurs multiple times, such as duplicated
+        // In the case that an identical directive occurs multiple times, such as duplicated
         // entries, we'll need to count each occurrence and map them to a single Directive
         // instance.
         let mut occurrences = HashMap::new();
@@ -179,7 +139,7 @@ impl LedgerFile {
                     Directive::Transaction(inner) => inner.source,
                     Directive::Unsupported => None,
                 }
-                .unwrap();
+                .expect("Directive did not have a source associated with it");
 
                 // If this is a duplicate entry, either bump the occurrence or set this as the first one.
                 let occurrence = *occurrences
@@ -189,17 +149,18 @@ impl LedgerFile {
 
                 let source_lines: Vec<&str> = source_text.lines().collect();
 
-                // Find the occurrenceth instance of source_text in source, and collect the line number.
-                let line_number = self
+                let matches: Vec<_> = self
                     .source
                     .lines()
                     .enumerate()
                     // This is a bit hacky. Basically we're trying to find the directive substring
-                    // in the source string, and retrieving the starting line number.
+                    // in the source string, and retrieving the start and end line number.
                     .scan((0, 0), |(index, start), (line_number, line)| {
                         if *index >= source_lines.len() {
+                            let lines = (*start, *start + *index);
+                            *start += *index + 1;
                             *index = 0;
-                            return Some(Some(*start));
+                            return Some(Some(lines));
                         } else {
                             if source_lines[*index] == line {
                                 *index += 1;
@@ -212,18 +173,16 @@ impl LedgerFile {
                         Some(None)
                     })
                     .filter_map(Option::from)
-                    .nth(occurrence);
+                    .collect();
 
-                if line_number == None {
-                    panic!("Unable to find {:#?}", directive);
-                }
-
-                Sourced {
-                    directive,
-                    location: Location {
-                        file: self,
-                        line_number: line_number.unwrap(),
-                    },
+                // Find the occurrenceth instance of source_text in source, and collect the line number.
+                if let Some((start, end)) = matches.iter().nth(occurrence) {
+                    Sourced {
+                        inner: directive,
+                        location: Location::from(self, *start, *end),
+                    }
+                } else {
+                    panic!("Unable to find {} in source file", source_text);
                 }
             })
             .collect()
