@@ -97,17 +97,13 @@ impl Ledger {
         Ok(Ledger { files: ledgers })
     }
 
-    pub fn directives<'a>(&'a self) -> Vec<Sourced<'a, Directive<'a>>> {
-        self.files
-            .iter()
-            .map(LedgerFile::directives)
-            .flatten()
-            .collect()
+    pub fn directives(&self) -> Vec<Sourced<'_, Directive<'_>>> {
+        self.files.iter().flat_map(LedgerFile::directives).collect()
     }
 }
 
 impl LedgerFile {
-    fn directives<'a>(&'a self) -> Vec<Sourced<'a, Directive<'a>>> {
+    fn directives(&self) -> Vec<Sourced<'_, Directive<'_>>> {
         let ledger = parse(&self.source)
             .map_err(|e| Error::Ledger(self.path.clone(), e))
             .unwrap();
@@ -161,13 +157,11 @@ impl LedgerFile {
                             *start += *index + 1;
                             *index = 0;
                             return Some(Some(lines));
+                        } else if source_lines[*index] == line {
+                            *index += 1;
                         } else {
-                            if source_lines[*index] == line {
-                                *index += 1;
-                            } else {
-                                *index = 0;
-                                *start = line_number + 1;
-                            }
+                            *index = 0;
+                            *start = line_number + 1;
                         }
 
                         Some(None)
@@ -176,7 +170,7 @@ impl LedgerFile {
                     .collect();
 
                 // Find the occurrenceth instance of source_text in source, and collect the line number.
-                if let Some((start, end)) = matches.iter().nth(occurrence) {
+                if let Some((start, end)) = matches.get(occurrence) {
                     Sourced {
                         inner: directive,
                         location: Location::from(self, *start, *end),

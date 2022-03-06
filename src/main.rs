@@ -17,14 +17,14 @@ fn main() {
     find_duplicates(&directives);
 }
 
-fn find_duplicates<'a>(directives: &Vec<Sourced<'a, Directive<'a>>>) {
+fn find_duplicates<'a>(directives: &[Sourced<'a, Directive<'a>>]) {
     let mut set = HashMap::new();
 
     for dir in directives.iter() {
         if let Directive::Transaction(txn) = &dir.inner {
             set.entry(txn.fingerprint())
                 .and_modify(|sources: &mut Vec<Location>| sources.push(dir.location.clone()))
-                .or_insert(vec![dir.location.clone()]);
+                .or_insert_with(|| vec![dir.location.clone()]);
         }
     }
 

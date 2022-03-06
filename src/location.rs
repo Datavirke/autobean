@@ -71,13 +71,6 @@ impl<'a> Display for LocationSpan<'a> {
         let first = self.locations.iter().map(|l| l.start_line).min().unwrap();
         let last = self.locations.iter().map(|l| l.end_line).max().unwrap();
 
-        let all_lines: Vec<_> = self
-            .locations
-            .iter()
-            .map(|l| l.start_line..l.end_line)
-            .flatten()
-            .collect();
-
         if first == last {
             writeln!(
                 f,
@@ -110,7 +103,12 @@ impl<'a> Display for LocationSpan<'a> {
             .skip(first)
             .take(last - first)
         {
-            if all_lines.contains(&line_number) {
+            if self
+                .locations
+                .iter()
+                .flat_map(|l| l.start_line..l.end_line)
+                .any(|line| line == line_number)
+            {
                 writeln!(f, "{: >4} | {}", line_number + 1, line.bold())?;
             } else {
                 writeln!(f, "     | {}", line)?;
@@ -131,7 +129,7 @@ where
 {
     fn to_span(self, tolerance: usize) -> Vec<LocationSpan<'a>> {
         let mut locations: Vec<_> = self.collect();
-        if locations.len() == 0 {
+        if locations.is_empty() {
             return Vec::new();
         }
 
