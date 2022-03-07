@@ -13,6 +13,7 @@ fn main() {
     for lint in [
         lints::find_double_entries(&directives),
         lints::find_duplicates(&directives),
+        lints::find_unbalanced_entries(&directives),
     ]
     .iter()
     .flatten()
