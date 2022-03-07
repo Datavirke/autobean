@@ -68,7 +68,6 @@ pub fn find_unbalanced_entries<'a>(directives: &[Sourced<'a, Directive<'a>>]) ->
         .collect()
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::find_unbalanced_entries;
