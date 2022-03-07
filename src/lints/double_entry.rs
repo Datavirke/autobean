@@ -159,6 +159,6 @@ mod tests {
         );
 
         let double_entries = find_double_entries(&ledger.directives());
-        assert!(double_entries.len() == 1);
+        assert_eq!(double_entries.len(), 1);
     }
 }
