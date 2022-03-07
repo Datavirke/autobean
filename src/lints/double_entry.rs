@@ -5,7 +5,7 @@ use colored::Colorize;
 
 use crate::{ledger::Sourced, lints::Lint, location::ToLocationSpan};
 
-#[derive(PartialEq, Hash, Eq)]
+#[derive(Debug, PartialEq, Hash, Eq)]
 pub struct DoubleEntry<'a> {
     entries: [Sourced<'a, Transaction<'a>>; 2],
 }
@@ -139,6 +139,8 @@ pub fn find_double_entries<'a>(directives: &[Sourced<'a, Directive<'a>>]) -> Vec
 mod tests {
     use crate::inline_ledger;
 
+    use super::find_double_entries;
+
     #[test]
     fn test_double_entry() {
         let ledger = inline_ledger!(
@@ -150,11 +152,14 @@ mod tests {
         2000-01-01 * "Example Payee" ""
             Assets:Bank:Savings  1500 DKK
             Assets:Bank:Account
+
+        2000-01-01 * "Unrelated Transaction" ""
+            Assets:Bank:Savings  1 DKK
+            Assets:Bank:Account
         "#
         );
 
-        for dir in ledger.directives() {
-            println!("directive:\n{}", dir);
-        }
+        let double_entries = find_double_entries(&ledger.directives());
+        assert!(double_entries.len() == 1);
     }
 }

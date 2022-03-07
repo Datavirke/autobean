@@ -48,7 +48,7 @@ impl<'a> Fingerprint<'a> for Transaction<'a> {
     }
 }
 
-#[derive(PartialEq, Hash, Eq)]
+#[derive(Debug, PartialEq, Hash, Eq)]
 pub struct DuplicateTransaction<'a> {
     entries: [Sourced<'a, Transaction<'a>>; 2],
 }

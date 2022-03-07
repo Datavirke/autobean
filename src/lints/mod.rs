@@ -6,6 +6,7 @@ use std::fmt::Display;
 pub use double_entry::find_double_entries;
 pub use duplicates::find_duplicates;
 
+#[derive(Debug)]
 pub enum Lint<'a> {
     DoubleEntry(double_entry::DoubleEntry<'a>),
     DuplicateTransaction(duplicates::DuplicateTransaction<'a>),

@@ -110,6 +110,14 @@ impl<'a, T> Hash for Sourced<'a, T> {
     }
 }
 
+impl<'a, T> Debug for Sourced<'a, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Sourced")
+            .field("location", &self.location)
+            .finish()
+    }
+}
+
 impl<'a, T> Display for Sourced<'a, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.location.with_context(1))
