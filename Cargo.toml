@@ -11,6 +11,7 @@ chrono = { version = "0.4.19", features = ["serde"] }
 serde = { version = "1.0.136", features = ["derive"] }
 thiserror = "1.0.30"
 colored = "2.0.0"
+unindent = "0.1.8"
 beancount-core = { git = "https://github.com/twilco/beancount" }
 beancount-parser = { git = "https://github.com/twilco/beancount" }
 beancount-render = { git = "https://github.com/twilco/beancount" }

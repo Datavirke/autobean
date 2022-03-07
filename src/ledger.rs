@@ -7,24 +7,71 @@ use std::{
 
 use beancount_core::Directive;
 use beancount_parser::parse;
+use colored::Colorize;
 
 use crate::{error::Error, location::Location};
 
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub enum LedgerSource {
+    File(PathBuf),
+    Code {
+        filename: &'static str,
+        line_offset: u32,
+    },
+}
+
+#[macro_export]
+macro_rules! inline_ledger {
+    ( $source:literal ) => {
+        crate::ledger::Ledger {
+            files: vec![crate::ledger::LedgerFile {
+                source: crate::ledger::LedgerSource::Code {
+                    filename: file!(),
+                    line_offset: line!() + 1,
+                },
+                text_contents: unindent::unindent($source),
+            }],
+        }
+    };
+}
+
+impl LedgerSource {
+    pub fn filename(&self) -> PathBuf {
+        match self {
+            LedgerSource::File(path) => path.clone(),
+            LedgerSource::Code { filename, .. } => PathBuf::from(filename),
+        }
+    }
+
+    pub fn line_offset(&self) -> u32 {
+        match self {
+            LedgerSource::File(_) => 0,
+            LedgerSource::Code { line_offset, .. } => *line_offset,
+        }
+    }
+}
+
+impl From<PathBuf> for LedgerSource {
+    fn from(path: PathBuf) -> Self {
+        LedgerSource::File(path)
+    }
+}
+
 #[derive(Eq)]
 pub struct LedgerFile {
-    pub path: PathBuf,
-    pub source: String,
+    pub source: LedgerSource,
+    pub text_contents: String,
 }
 
 impl Hash for LedgerFile {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.path.hash(state);
+        self.source.hash(state);
     }
 }
 
 impl PartialEq for LedgerFile {
     fn eq(&self, other: &Self) -> bool {
-        self.path == other.path
+        self.source == other.source
     }
 }
 
@@ -32,7 +79,7 @@ impl Debug for LedgerFile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // Omit the 'source' string, since it's usually very large.
         f.debug_struct("LedgerFile")
-            .field("path", &self.path)
+            .field("path", &self.source)
             .finish()
     }
 }
@@ -70,7 +117,7 @@ impl<'a, T> Display for Sourced<'a, T> {
 /// containing multiple beancount and csv files.
 #[derive(Debug)]
 pub struct Ledger {
-    files: Vec<LedgerFile>,
+    pub files: Vec<LedgerFile>,
 }
 
 impl Ledger {
@@ -108,7 +155,10 @@ impl Ledger {
                         source
                     };
 
-                    ledgers.push(LedgerFile { path: file, source });
+                    ledgers.push(LedgerFile {
+                        source: file.into(),
+                        text_contents: source,
+                    });
                 }
             }
         }
@@ -122,9 +172,17 @@ impl Ledger {
 }
 
 impl LedgerFile {
+    pub fn filename(&self) -> PathBuf {
+        self.source.filename()
+    }
+
+    pub fn line_offset(&self) -> u32 {
+        self.source.line_offset()
+    }
+
     fn directives(&self) -> Vec<Sourced<'_, Directive<'_>>> {
-        let ledger = parse(&self.source)
-            .map_err(|e| Error::Ledger(self.path.clone(), e))
+        let ledger = parse(&self.text_contents)
+            .map_err(|e| Error::Ledger(self.source.filename(), e))
             .unwrap();
 
         // We use this hashmap to keep track of each occurrence of a directive.
@@ -165,25 +223,27 @@ impl LedgerFile {
                 let source_lines: Vec<&str> = source_text.lines().collect();
 
                 let matches: Vec<_> = self
-                    .source
+                    .text_contents
                     .lines()
                     .enumerate()
                     // This is a bit hacky. Basically we're trying to find the directive substring
                     // in the source string, and retrieving the start and end line number.
-                    .scan((0, 0), |(index, start), (line_number, line)| {
-                        if *index >= source_lines.len() {
-                            let lines = (*start, *start + *index);
-                            *start += *index + 1;
-                            *index = 0;
-                            return Some(Some(lines));
-                        } else if source_lines[*index] == line {
+                    .scan((0u32, 0u32), |(index, start), (line_number, line)| {
+                        if source_lines[*index as usize] == line {
                             *index += 1;
                         } else {
                             *index = 0;
-                            *start = line_number + 1;
+                            *start = (line_number + 1) as u32;
                         }
 
-                        Some(None)
+                        if *index as usize == source_lines.len() {
+                            let lines = (*start, *start + *index);
+                            *start += *index + 1;
+                            *index = 0;
+                            Some(Some(lines))
+                        } else {
+                            Some(None)
+                        }
                     })
                     .filter_map(Option::from)
                     .collect();
@@ -195,7 +255,11 @@ impl LedgerFile {
                         location: Location::from(self, *start, *end),
                     }
                 } else {
-                    panic!("Unable to find {} in source file", source_text);
+                    panic!(
+                        "Unable to find\n{}\n in source file {}",
+                        source_text.red(),
+                        self.filename().to_string_lossy()
+                    );
                 }
             })
             .collect()

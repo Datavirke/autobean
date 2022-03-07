@@ -134,3 +134,27 @@ pub fn find_double_entries<'a>(directives: &[Sourced<'a, Directive<'a>>]) -> Vec
 
     double_entries.into_iter().map(Lint::from).collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::inline_ledger;
+
+    #[test]
+    fn test_double_entry() {
+        let ledger = inline_ledger!(
+            r#"
+        2000-01-01 * "Example Payee" ""
+            Assets:Bank:Account  -1500 DKK
+            Assets:Bank:Savings
+
+        2000-01-01 * "Example Payee" ""
+            Assets:Bank:Savings  1500 DKK
+            Assets:Bank:Account
+        "#
+        );
+
+        for dir in ledger.directives() {
+            println!("directive:\n{}", dir);
+        }
+    }
+}

@@ -17,6 +17,6 @@ fn main() {
     .iter()
     .flatten()
     {
-        println!("{}", lint);
+        print!("{}", lint);
     }
 }
