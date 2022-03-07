@@ -67,3 +67,27 @@ pub fn find_unbalanced_entries<'a>(directives: &[Sourced<'a, Directive<'a>>]) ->
         })
         .collect()
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::find_unbalanced_entries;
+    use crate::inline_ledger;
+
+    #[test]
+    fn test_duplicates() {
+        let ledger = inline_ledger!(
+            r#"
+        2000-01-01 * "Example Payee" ""
+            Assets:Bank:Account  1500 DKK
+
+        2000-01-01 * "Example Payee" ""
+            Assets:Bank:Account  2000 DKK
+            Assets:Other:Something
+        "#
+        );
+
+        let duplicates = find_unbalanced_entries(&ledger.directives());
+        assert_eq!(duplicates.len(), 1);
+    }
+}
