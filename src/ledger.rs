@@ -14,6 +14,7 @@ use crate::{error::Error, location::Location};
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum LedgerSource {
     File(PathBuf),
+    #[cfg(test)]
     Code {
         filename: &'static str,
         line_offset: u32,
@@ -39,6 +40,7 @@ impl LedgerSource {
     pub fn filename(&self) -> PathBuf {
         match self {
             LedgerSource::File(path) => path.clone(),
+            #[cfg(test)]
             LedgerSource::Code { filename, .. } => PathBuf::from(filename),
         }
     }
@@ -46,6 +48,7 @@ impl LedgerSource {
     pub fn line_offset(&self) -> u32 {
         match self {
             LedgerSource::File(_) => 0,
+            #[cfg(test)]
             LedgerSource::Code { line_offset, .. } => *line_offset,
         }
     }
