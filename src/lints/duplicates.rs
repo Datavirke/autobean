@@ -132,3 +132,31 @@ pub fn find_duplicates<'a>(directives: &[Sourced<'a, Directive<'a>>]) -> Vec<Lin
         .map(Lint::from)
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::find_duplicates;
+    use crate::inline_ledger;
+
+    #[test]
+    fn test_duplicates() {
+        let ledger = inline_ledger!(
+            r#"
+        2000-01-01 * "Example Payee" ""
+            Assets:Bank:Account  -1500 DKK
+            Assets:Bank:Savings
+
+        2000-01-01 * "Example Payee" ""
+            Assets:Bank:Account  -1500 DKK
+            Assets:Bank:Savings
+
+        2000-01-01 * "Example Payee" ""
+            Assets:Bank:Account  -1500 DKK
+            Assets:Bank:Savings
+        "#
+        );
+
+        let duplicates = find_duplicates(&ledger.directives());
+        assert_eq!(duplicates.len(), 1);
+    }
+}

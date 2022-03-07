@@ -137,9 +137,8 @@ pub fn find_double_entries<'a>(directives: &[Sourced<'a, Directive<'a>>]) -> Vec
 
 #[cfg(test)]
 mod tests {
-    use crate::inline_ledger;
-
     use super::find_double_entries;
+    use crate::inline_ledger;
 
     #[test]
     fn test_double_entry() {
