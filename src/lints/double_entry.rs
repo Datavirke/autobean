@@ -3,7 +3,7 @@ use std::{collections::HashSet, fmt::Display};
 use beancount_core::{Directive, Transaction};
 use colored::Colorize;
 
-use crate::{ledger::Sourced, lints::Lint, location::ToLocationSpan};
+use crate::{ledger::Sourced, lints::Lint, location::ToLocationSpan, readable::Payees};
 
 #[derive(Debug, PartialEq, Hash, Eq)]
 pub struct DoubleEntry<'a> {
@@ -31,22 +31,9 @@ impl<'a> Display for DoubleEntry<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(
             f,
-            "{} potential double entry transaction {} and {}:",
+            "{} potential double entry transaction {}:",
             "warning:".yellow().bold(),
-            self.entries[0]
-                .inner
-                .payee
-                .as_deref()
-                .unwrap_or_default()
-                .bold()
-                .green(),
-            self.entries[1]
-                .inner
-                .payee
-                .as_deref()
-                .unwrap_or_default()
-                .bold()
-                .green()
+            Payees::from(&self.entries)
         )?;
 
         for source in [

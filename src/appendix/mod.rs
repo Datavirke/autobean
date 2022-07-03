@@ -1,7 +1,5 @@
 pub mod statement;
 
-use std::fmt::Display;
-
 use beancount_core::{Directive, Transaction};
 use thiserror::Error;
 
@@ -45,6 +43,12 @@ pub enum AppendixExtractionError {
 pub struct TransactionWithAppendix<'a> {
     pub transaction: Sourced<'a, Transaction<'a>>,
     pub appendix: Appendix,
+}
+
+impl<'a> From<TransactionWithAppendix<'a>> for Transaction<'a> {
+    fn from(txn: TransactionWithAppendix<'a>) -> Self {
+        txn.transaction.inner
+    }
 }
 
 pub trait IntoAppendices<'a> {

@@ -3,12 +3,13 @@ mod error;
 mod ledger;
 mod lints;
 mod location;
+mod readable;
 
 use appendix::statement::FromStatementPath;
 use ledger::Ledger;
 
 fn main() {
-    let ledger = Ledger::from_path("data/datavirke").unwrap();
+    let ledger = Ledger::from_path("data/personal").unwrap();
 
     let directives = ledger.directives();
 

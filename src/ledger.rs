@@ -150,6 +150,16 @@ macro_rules! impl_downcast {
                 }
             }
         }
+
+        impl<'a> From<Sourced<'a, beancount_core::directives::$name<'a>>>
+            for beancount_core::directives::$name<'a>
+        {
+            fn from(
+                sourced: Sourced<'a, beancount_core::directives::$name<'a>>,
+            ) -> beancount_core::directives::$name<'a> {
+                sourced.inner
+            }
+        }
     };
 }
 

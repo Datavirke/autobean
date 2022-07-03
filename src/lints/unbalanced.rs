@@ -3,7 +3,7 @@ use std::fmt::Display;
 use beancount_core::{Directive, Transaction};
 use colored::Colorize;
 
-use crate::ledger::Sourced;
+use crate::{ledger::Sourced, readable::Payees};
 
 use super::Lint;
 
@@ -30,13 +30,7 @@ impl<'a> Display for UnbalancedEntry<'a> {
             f,
             "{} unbalanced transaction {}:",
             "warning:".yellow().bold(),
-            self.entry
-                .inner
-                .payee
-                .as_deref()
-                .unwrap_or_default()
-                .bold()
-                .green()
+            Payees::from(&self.entry)
         )?;
 
         writeln!(f, "{}", self.entry.location)

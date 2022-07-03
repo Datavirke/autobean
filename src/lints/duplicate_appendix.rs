@@ -8,6 +8,7 @@ use crate::{
     appendix::{AppendixExtractor, IntoAppendices, TransactionWithAppendix},
     ledger::Sourced,
     location::ToLocationSpan,
+    readable::Payees,
 };
 
 use super::Lint;
@@ -27,23 +28,10 @@ impl<'a> Display for DuplicateAppendix<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(
             f,
-            "{} appendix id {} is used in transactions {} and {}, but the appendices themselves are not the same.",
+            "{} appendix id {} is used in transactions {}, but the appendices themselves are not the same.",
             "warning:".yellow().bold(),
             self.entries[0].appendix.id,
-            self.entries[0]
-                .transaction
-                .payee
-                .as_deref()
-                .unwrap_or_default()
-                .bold()
-                .green(),
-            self.entries[1]
-                .transaction
-                .payee
-                .as_deref()
-                .unwrap_or_default()
-                .bold()
-                .green(),
+            Payees::from(&self.entries),
         )?;
 
         for source in [

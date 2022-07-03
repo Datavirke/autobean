@@ -7,6 +7,7 @@ use crate::{
     appendix::{AppendixExtractor, TransactionWithAppendix},
     ledger::{Downcast, Sourced},
     location::ToLocationSpan,
+    readable::Payees,
 };
 
 use super::Lint;
@@ -27,22 +28,12 @@ impl<'a> Display for NonSequentialAppendix<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(
             f,
-            "{} nonsequential appendix ids between {} and {} ({} --> {}):",
+            "{} nonsequential appendix ids between {} ({} --> {}):",
             "warning:".yellow().bold(),
-            self.before
-                .transaction
-                .payee
-                .as_deref()
-                .unwrap_or_default()
-                .bold()
-                .green(),
-            self.after
-                .transaction
-                .payee
-                .as_deref()
-                .unwrap_or_default()
-                .bold()
-                .green(),
+            Payees::from(&[
+                self.before.transaction.clone(),
+                self.after.transaction.clone()
+            ]),
             self.before.appendix.id,
             self.after.appendix.id
         )?;
@@ -91,7 +82,7 @@ pub fn find_nonsequential_appendices<'a, Extractor: AppendixExtractor<'a>>(
     keys.iter()
         .copied()
         .fold(
-            (keys.first().copied().unwrap_or(0) - 1, vec![]),
+            (keys.first().copied().unwrap_or(1) - 1, vec![]),
             |(latest, mut gaps), key| {
                 if key != latest + 1 {
                     gaps.push(
