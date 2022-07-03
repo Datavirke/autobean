@@ -11,7 +11,7 @@ pub struct DoubleEntry<'a> {
 }
 
 impl<'a> DoubleEntry<'a> {
-    pub fn from(entries: &[Sourced<'a, Transaction<'a>>]) -> Self {
+    fn from(entries: &[Sourced<'a, Transaction<'a>>]) -> Self {
         let mut entries: [Sourced<'a, Transaction<'a>>; 2] =
             [entries[0].clone(), entries[1].clone()];
 
