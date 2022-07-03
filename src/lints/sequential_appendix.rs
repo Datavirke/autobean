@@ -4,18 +4,12 @@ use beancount_core::{Directive, Transaction};
 use colored::Colorize;
 
 use crate::{
-    appendix::{Appendix, AppendixExtractor},
+    appendix::{AppendixExtractor, TransactionWithAppendix},
     ledger::{Downcast, Sourced},
     location::ToLocationSpan,
 };
 
 use super::Lint;
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct TransactionWithAppendix<'a> {
-    transaction: Sourced<'a, Transaction<'a>>,
-    appendix: Appendix,
-}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct NonSequentialAppendix<'a> {

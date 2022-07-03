@@ -1,9 +1,11 @@
 pub mod statement;
 
-use beancount_core::Transaction;
+use std::fmt::Display;
+
+use beancount_core::{Directive, Transaction};
 use thiserror::Error;
 
-use crate::ledger::Sourced;
+use crate::ledger::{Downcast, Sourced};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Appendix {
@@ -37,4 +39,33 @@ pub enum AppendixExtractionError {
     NoCaptures,
     #[error("the statement id could not be converted to a 64-bit unsigned integer")]
     ConversionFailed,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TransactionWithAppendix<'a> {
+    pub transaction: Sourced<'a, Transaction<'a>>,
+    pub appendix: Appendix,
+}
+
+pub trait IntoAppendices<'a> {
+    fn into_appendices<Extractor: AppendixExtractor<'a>>(self) -> Vec<TransactionWithAppendix<'a>>;
+}
+
+impl<'a, I: Iterator<Item = Sourced<'a, Directive<'a>>>> IntoAppendices<'a> for I {
+    fn into_appendices<Extractor: AppendixExtractor<'a>>(self) -> Vec<TransactionWithAppendix<'a>> {
+        self.filter_map(Transaction::downcast)
+            .filter_map(|transaction| {
+                // For the sake of brevity, in this check we're ignoring transactions
+                // that don't contain, or contain an unparseable appendix id.
+                if let Ok(appendix) = Extractor::from_transaction(transaction.clone()) {
+                    Some(TransactionWithAppendix {
+                        transaction,
+                        appendix,
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
 }
