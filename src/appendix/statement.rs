@@ -7,13 +7,13 @@ use crate::{
     ledger::Sourced,
 };
 
-pub struct AppendixFromStatementPath;
+pub struct FromStatementPath;
 
-// Matches 2000-01-01.<AppendixID>.*
+// Matches 2000-01-01.{AppendixID}.*
 static DATE_DOT_ID: Lazy<Regex> =
     Lazy::new(|| Regex::new(".*/?\\d\\d\\d\\d\\-\\d\\d\\-\\d\\d\\.(\\d+)\\..*").unwrap());
 
-impl<'a> AppendixExtractor<'a> for AppendixFromStatementPath {
+impl<'a> AppendixExtractor<'a> for FromStatementPath {
     fn from_transaction(
         transaction: Sourced<'a, Transaction<'a>>,
     ) -> Result<Appendix, AppendixError> {
@@ -53,7 +53,7 @@ mod tests {
 
     use crate::{
         appendix::{
-            statement::{AppendixExtractionError, AppendixFromStatementPath},
+            statement::{AppendixExtractionError, FromStatementPath},
             Appendix, AppendixError, AppendixExtractor,
         },
         inline_ledger,
@@ -75,7 +75,7 @@ mod tests {
             .directives()
             .into_iter()
             .filter_map(Transaction::downcast)
-            .map(AppendixFromStatementPath::from_transaction)
+            .map(FromStatementPath::from_transaction)
             .next()
             .unwrap()
             .unwrap();
@@ -104,7 +104,7 @@ mod tests {
             .directives()
             .into_iter()
             .filter_map(Transaction::downcast)
-            .map(AppendixFromStatementPath::from_transaction)
+            .map(FromStatementPath::from_transaction)
             .next()
             .unwrap();
 
@@ -131,7 +131,7 @@ mod tests {
             .directives()
             .into_iter()
             .filter_map(Transaction::downcast)
-            .map(AppendixFromStatementPath::from_transaction)
+            .map(FromStatementPath::from_transaction)
             .next()
             .unwrap();
 

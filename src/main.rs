@@ -4,10 +4,11 @@ mod ledger;
 mod lints;
 mod location;
 
+use appendix::statement::FromStatementPath;
 use ledger::Ledger;
 
 fn main() {
-    let ledger = Ledger::from_path("data").unwrap();
+    let ledger = Ledger::from_path("data/datavirke").unwrap();
 
     let directives = ledger.directives();
 
@@ -15,6 +16,7 @@ fn main() {
         lints::find_double_entries(&directives),
         lints::find_duplicates(&directives),
         lints::find_unbalanced_entries(&directives),
+        lints::find_nonsequential_appendices::<FromStatementPath>(&directives),
     ]
     .iter()
     .flatten()

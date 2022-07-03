@@ -25,9 +25,9 @@ pub enum LedgerSource {
 #[macro_export]
 macro_rules! inline_ledger {
     ( $source:literal ) => {
-        crate::ledger::Ledger {
-            files: vec![crate::ledger::LedgerFile {
-                source: crate::ledger::LedgerSource::Code {
+        $crate::ledger::Ledger {
+            files: vec![$crate::ledger::LedgerFile {
+                source: $crate::ledger::LedgerSource::Code {
                     filename: file!(),
                     line_offset: line!() + 1,
                 },

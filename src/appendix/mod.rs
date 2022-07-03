@@ -1,4 +1,4 @@
-mod statement;
+pub mod statement;
 
 use beancount_core::Transaction;
 use thiserror::Error;
@@ -7,8 +7,8 @@ use crate::ledger::Sourced;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Appendix {
-    statement: String,
-    id: u64,
+    pub statement: String,
+    pub id: u64,
 }
 
 pub trait AppendixExtractor<'a> {
