@@ -1,3 +1,4 @@
+mod appendix;
 mod error;
 mod ledger;
 mod lints;
