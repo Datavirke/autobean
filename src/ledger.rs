@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     fmt::{Debug, Display},
     hash::Hash,
+    ops::Deref,
     path::{Path, PathBuf},
 };
 
@@ -93,6 +94,14 @@ pub struct Sourced<'a, T> {
     pub location: Location<'a>,
 }
 
+impl<'a, T> Deref for Sourced<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
 impl<'a, T> Eq for Sourced<'a, T> {
     fn assert_receiver_is_total_eq(&self) {}
 }
@@ -123,6 +132,41 @@ impl<'a, T> Display for Sourced<'a, T> {
         write!(f, "{}", self.location.with_context(1))
     }
 }
+
+pub trait Downcast<'a>: Sized {
+    fn downcast(directive: Sourced<'a, Directive<'a>>) -> Option<Sourced<'a, Self>>;
+}
+
+macro_rules! impl_downcast {
+    ($name:ident) => {
+        impl<'a> Downcast<'a> for beancount_core::directives::$name<'a> {
+            fn downcast(directive: Sourced<'a, Directive<'a>>) -> Option<Sourced<'a, Self>> {
+                match directive.inner {
+                    beancount_core::directives::Directive::$name(inner) => Some(Sourced {
+                        inner,
+                        location: directive.location,
+                    }),
+                    _ => None,
+                }
+            }
+        }
+    };
+}
+
+impl_downcast!(Open);
+impl_downcast!(Close);
+impl_downcast!(Balance);
+impl_downcast!(Commodity);
+impl_downcast!(Custom);
+impl_downcast!(Document);
+impl_downcast!(Event);
+impl_downcast!(Include);
+impl_downcast!(Note);
+impl_downcast!(Pad);
+impl_downcast!(Plugin);
+impl_downcast!(Price);
+impl_downcast!(Query);
+impl_downcast!(Transaction);
 
 /// A Ledger is a complete view of an entire directory structure potentially
 /// containing multiple beancount and csv files.
