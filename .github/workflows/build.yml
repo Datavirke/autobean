@@ -37,11 +37,15 @@ jobs:
             type=semver,pattern={{major}}
             type=sha
 
+      - name: export buildcache directory
+        run: |
+          echo "buildcache=${GITHUB_REPOSITORY,,}:${GITHUB_REF}-buildcache" >>${GITHUB_ENV}
+
       - name: build and push
         uses: docker/build-push-action@v3
         with:
-          cache-from: type=registry,ref=${{ github.repository }}:${{ github.ref }}-buildcache
-          cache-to: type=registry,ref=${{ github.repository }}:${{ github.ref }}-buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.buildcache }}
+          cache-to: type=registry,ref=${{ env.buildcache }},mode=max
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
