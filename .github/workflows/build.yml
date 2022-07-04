@@ -39,7 +39,7 @@ jobs:
 
       - name: export buildcache directory
         run: |
-          echo "buildcache=${GITHUB_REPOSITORY,,}:${GITHUB_REF}-buildcache" >>${GITHUB_ENV}
+          echo "buildcache=${GITHUB_REPOSITORY,,}:${GITHUB_REF_NAME}-buildcache" >>${GITHUB_ENV}
 
       - name: build and push
         uses: docker/build-push-action@v3
