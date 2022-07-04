@@ -27,7 +27,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/datavirke/autobean
+            ghcr.io/${{ github.repository }}
           tags: |
             type=schedule
             type=ref,event=branch
@@ -40,8 +40,8 @@ jobs:
       - name: build and push
         uses: docker/build-push-action@v3
         with:
-          cache-from: type=registry,ref=${{ github.ref }}
-          cache-to: type=registry,ref=${{ github.ref }},mode=max
+          cache-from: type=registry,ref=${{ github.repository }}:${{ github.ref }}-buildcache
+          cache-to: type=registry,ref=${{ github.repository }}:${{ github.ref }}-buildcache,mode=max
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
