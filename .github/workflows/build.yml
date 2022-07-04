@@ -37,17 +37,11 @@ jobs:
             type=semver,pattern={{major}}
             type=sha
 
-      - name: cache docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
       - name: build and push
         uses: docker/build-push-action@v3
         with:
+          cache-from: type=registry,ref=${{ github.ref }}
+          cache-to: type=registry,ref=${{ github.ref }},mode=max
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
