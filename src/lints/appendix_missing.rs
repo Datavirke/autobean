@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use beancount_core::{Directive, Transaction};
 use colored::Colorize;
+use log::debug;
 
 use crate::{
     appendix::AppendixExtractor,
@@ -44,6 +45,7 @@ impl<'a> Display for MissingAppendix<'a> {
 pub fn find_missing_appendices<'a, Extractor: AppendixExtractor<'a>>(
     directives: &[Sourced<'a, Directive<'a>>],
 ) -> Vec<Lint<'a>> {
+    debug!("checking for missing appendices");
     directives
         .iter()
         .cloned()

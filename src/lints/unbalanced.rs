@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use beancount_core::{Directive, Transaction};
 use colored::Colorize;
+use log::debug;
 
 use crate::{ledger::Sourced, readable::Payees};
 
@@ -38,6 +39,7 @@ impl<'a> Display for UnbalancedEntry<'a> {
 }
 
 pub fn find_unbalanced_entries<'a>(directives: &[Sourced<'a, Directive<'a>>]) -> Vec<Lint<'a>> {
+    debug!("checking for unbalanced transactions");
     directives
         .iter()
         .filter_map(|dir| {

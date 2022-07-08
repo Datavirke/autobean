@@ -2,6 +2,7 @@ use std::{collections::HashSet, fmt::Display};
 
 use beancount_core::{Directive, Transaction};
 use colored::Colorize;
+use log::debug;
 
 use crate::{ledger::Sourced, lints::Lint, location::ToLocationSpan, readable::Payees};
 
@@ -51,6 +52,7 @@ impl<'a> Display for DoubleEntry<'a> {
 }
 
 pub fn find_double_entries<'a>(directives: &[Sourced<'a, Directive<'a>>]) -> Vec<Lint<'a>> {
+    debug!("checking for double entry transactions");
     let mut double_entries = HashSet::new();
 
     for first in directives.iter() {

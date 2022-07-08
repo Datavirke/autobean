@@ -8,6 +8,7 @@ mod readable;
 use appendix::statement::FromStatementPath;
 use clap::Parser;
 use ledger::Ledger;
+use log::{debug, LevelFilter};
 
 /// Lints beancount files in a directory
 #[derive(Parser, Debug)]
@@ -17,14 +18,25 @@ struct Args {
     /// Defaults to working directory.
     #[clap(value_parser, default_value_t = String::from("."))]
     path: String,
+
+    /// Debug level for the application logger. One of:
+    /// off, error, warn, info, debug or trace
+    #[clap(short, long, value_parser, default_value_t = LevelFilter::Off)]
+    debug: LevelFilter,
 }
 
 fn main() {
     let args = Args::parse();
 
-    let ledger = Ledger::from_path(args.path).unwrap();
+    pretty_env_logger::formatted_timed_builder()
+        .filter_level(args.debug)
+        .init();
+
+    let ledger = Ledger::from_path(&args.path).unwrap();
+    debug!("loading ledgers from: {}", &args.path);
 
     let directives = ledger.directives();
+    debug!("compiled ledger contains {} directives", directives.len());
 
     for lint in [
         lints::find_double_entries(&directives),

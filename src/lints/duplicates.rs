@@ -2,6 +2,7 @@ use std::{borrow::Cow, collections::HashMap, fmt::Display};
 
 use beancount_core::{Account, Date, Directive, IncompleteAmount, Posting, Transaction};
 use colored::Colorize;
+use log::debug;
 
 use crate::{ledger::Sourced, location::ToLocationSpan};
 
@@ -100,6 +101,7 @@ impl<'a> Display for DuplicateTransaction<'a> {
 }
 
 pub fn find_duplicates<'a>(directives: &[Sourced<'a, Directive<'a>>]) -> Vec<Lint<'a>> {
+    debug!("checking for duplicate transactions");
     let mut set = HashMap::new();
 
     for dir in directives.iter() {

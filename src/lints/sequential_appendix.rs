@@ -2,6 +2,7 @@ use std::{collections::HashMap, fmt::Display};
 
 use beancount_core::{Directive, Transaction};
 use colored::Colorize;
+use log::debug;
 
 use crate::{
     appendix::{AppendixExtractor, TransactionWithAppendix},
@@ -55,6 +56,7 @@ impl<'a> Display for NonSequentialAppendix<'a> {
 pub fn find_nonsequential_appendices<'a, Extractor: AppendixExtractor<'a>>(
     directives: &[Sourced<'a, Directive<'a>>],
 ) -> Vec<Lint<'a>> {
+    debug!("checking for non-sequential appendices");
     let appendices: HashMap<u64, _> = directives
         .iter()
         .cloned()

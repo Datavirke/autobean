@@ -3,6 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 use beancount_core::Directive;
 use colored::Colorize;
 use itertools::Itertools;
+use log::debug;
 
 use crate::{
     appendix::{AppendixExtractor, IntoAppendices, TransactionWithAppendix},
@@ -51,6 +52,7 @@ impl<'a> Display for DuplicateAppendix<'a> {
 pub fn find_duplicate_appendix_ids<'a, Extractor: AppendixExtractor<'a>>(
     directives: &[Sourced<'a, Directive<'a>>],
 ) -> Vec<Lint<'a>> {
+    debug!("checking for duplicate appendix ids");
     let appendices = directives.iter().cloned().into_appendices::<Extractor>();
 
     let duplicates: Vec<_> = appendices
