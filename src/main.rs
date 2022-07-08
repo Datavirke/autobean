@@ -6,13 +6,23 @@ mod location;
 mod readable;
 
 use appendix::statement::FromStatementPath;
+use clap::Parser;
 use ledger::Ledger;
 
+/// Lints beancount files in a directory
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    /// Path in which to look for *.beancount files.
+    /// Defaults to working directory.
+    #[clap(value_parser, default_value_t = String::from("."))]
+    path: String,
+}
+
 fn main() {
-    let ledger_path = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| "data".to_string());
-    let ledger = Ledger::from_path(ledger_path).unwrap();
+    let args = Args::parse();
+
+    let ledger = Ledger::from_path(args.path).unwrap();
 
     let directives = ledger.directives();
 
