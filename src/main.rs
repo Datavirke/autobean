@@ -5,10 +5,12 @@ mod lints;
 mod location;
 mod readable;
 
+use std::process::exit;
+
 use appendix::statement::FromStatementPath;
 use clap::Parser;
 use ledger::Ledger;
-use log::{debug, LevelFilter};
+use log::{debug, LevelFilter, warn};
 
 /// Lints beancount files in a directory
 #[derive(Parser, Debug)]
@@ -36,9 +38,13 @@ fn main() {
     debug!("loading ledgers from: {}", &args.path);
 
     let directives = ledger.directives();
-    debug!("compiled ledger contains {} directives", directives.len());
+    if directives.is_empty() {
+        warn!("ledger contains no directives, are you sure the directory contains any beancount files?");
+    } else {
+        debug!("compiled ledger contains {} directives", directives.len());
+    }
 
-    for lint in [
+    let lints: Vec<_> = [
         lints::find_double_entries(&directives),
         lints::find_duplicates(&directives),
         lints::find_unbalanced_entries(&directives),
@@ -46,9 +52,19 @@ fn main() {
         lints::find_duplicate_appendix_ids::<FromStatementPath>(&directives),
         lints::find_missing_appendices::<FromStatementPath>(&directives),
     ]
-    .iter()
+    .into_iter()
     .flatten()
-    {
-        print!("{}", lint);
+    .collect();
+
+    debug!("discovered {} issues", lints.len());
+
+    for lint in &lints {
+        eprint!("{}", lint);
     }
+
+    if !lints.is_empty() {
+        exit(1);
+    }
+
+    exit(0)
 }
