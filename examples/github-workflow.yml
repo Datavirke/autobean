@@ -1,0 +1,62 @@
+name: autobean
+
+# Trigger on pull requests, or pushes to the main branch.
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+
+jobs:
+  lint:
+    name: lint the accounts
+    runs-on: ubuntu-latest
+    steps:
+    - name: check out the repo
+      uses: actions/checkout@v2
+
+    - name: setup docker
+      uses: docker-practice/actions-setup-docker@v1
+
+    - name: run autobean
+      id: lint
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        docker run -t --rm                        \
+          -v ${{ github.workspace }}:/data        \
+          ghcr.io/datavirke/autobean:main         \
+          /data >> $GITHUB_STEP_SUMMARY
+
+        # Remove coloring
+        sed -i 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g' $GITHUB_STEP_SUMMARY
+        LINT_OUTPUT="$(cat $GITHUB_STEP_SUMMARY)"
+        LINT_OUTPUT="${LINT_OUTPUT//'%'/'%25'}"
+        LINT_OUTPUT="${LINT_OUTPUT//$'\n'/'%0A'}"
+        LINT_OUTPUT="${LINT_OUTPUT//$'\r'/'%0D'}"
+        echo "Output: $LINT_OUTPUT"
+        echo "::set-output name=lint::$LINT_OUTPUT"
+
+    - name: write lint summary to pull request comment
+      if: "${{ github.event_name == 'pull_request' && steps.lint.outputs.lint != '' }}"
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: autobean-output
+        recreate: true
+        message: |
+          ```
+          ${{ steps.lint.outputs.lint }}
+          ````
+    - name: delete pull request comment
+      if: "${{ github.event_name == 'pull_request' && steps.lint.outputs.lint == '' }}"
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: autobean-output
+        delete: true
+      continue-on-error: true
+
+    - name: check if any output was produced by the linter
+      if: "${{ steps.lint.outputs.lint != '' }}"
+      uses: actions/github-script@v3
+      with:
+        script: |
+          core.setFailed('Linter found errors in the beancount files')
