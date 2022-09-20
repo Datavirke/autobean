@@ -76,28 +76,29 @@ mod tests {
         // We'll just pretend the library source files are the statements.
         let ledger = inline_ledger!(
             r#"
-        2000-01-04 * "Invoice" ""
+        2000-01-04 * "File exists- ok" ""
             statement: "src/main.rs"
             Assets:Bank:Account  -1500 DKK
             Expenses:Utilities:Power
 
-        2000-01-03 * "Invoice" ""
+        2000-01-03 * "No statement - no error" ""
             Assets:Bank:Account  -1500 DKK
             Expenses:Utilities:Power
 
-        2000-01-02 * "Invoice" ""
+        2000-01-02 * "File exists - ok" ""
             statement: "Cargo.toml"
             Assets:Bank:Account  -1500 DKK
             Expenses:Utilities:Power
         
-        2000-01-01 * "Invoice" ""
+        2000-01-01 * "File not found!" ""
+            statement: "non-existent-file.pdf"
             Assets:Bank:Account  -1500 DKK
             Expenses:Utilities:Power
         "#
         );
 
         let missing_documents = find_missing_documents::<FromStatementPath>(&ledger.directives());
-        assert_eq!(missing_documents.len(), 2);
+        assert_eq!(missing_documents.len(), 1);
 
         for missing in missing_documents {
             println!("{}", missing);
