@@ -5,10 +5,20 @@ use thiserror::Error;
 
 use crate::ledger::{Downcast, Sourced};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Appendix {
     pub statement: String,
     pub id: u64,
+}
+
+impl Appendix {
+    pub fn statement(&self) -> &str {
+        &self.statement
+    }
+
+    pub fn id(&self) -> u64 {
+        self.id
+    }
 }
 
 pub trait AppendixExtractor<'a> {
