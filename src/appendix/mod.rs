@@ -5,10 +5,10 @@ use thiserror::Error;
 
 use crate::ledger::{Downcast, Sourced};
 
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Appendix {
-    pub statement: String,
     pub id: u64,
+    pub statement: String,
 }
 
 impl Appendix {
