@@ -10,7 +10,7 @@ use std::process::exit;
 use appendix::statement::FromStatementPath;
 use clap::Parser;
 use ledger::Ledger;
-use log::{debug, LevelFilter, warn};
+use log::{debug, warn, LevelFilter};
 
 /// Lints beancount files in a directory
 #[derive(Parser, Debug)]
@@ -51,6 +51,7 @@ fn main() {
         lints::find_nonsequential_appendices::<FromStatementPath>(&directives),
         lints::find_duplicate_appendix_ids::<FromStatementPath>(&directives),
         lints::find_missing_appendices::<FromStatementPath>(&directives),
+        lints::find_missing_documents::<FromStatementPath>(&directives),
     ]
     .into_iter()
     .flatten()
