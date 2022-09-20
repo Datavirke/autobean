@@ -10,14 +10,14 @@ use thiserror::Error;
 
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub struct Location<'a> {
-    source: &'a LedgerFile,
+    ledger: &'a LedgerFile,
     start_line: u32,
     end_line: u32,
 }
 
 impl<'a> PartialOrd for Location<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match self.source.filename().partial_cmp(&other.source.filename()) {
+        match self.ledger.filename().partial_cmp(&other.ledger.filename()) {
             Some(core::cmp::Ordering::Equal) => {}
             ord => return ord,
         }
@@ -31,7 +31,7 @@ impl<'a> PartialOrd for Location<'a> {
 
 impl<'a> Ord for Location<'a> {
     fn cmp(&self, other: &Self) -> Ordering {
-        match self.source.filename().cmp(&other.source.filename()) {
+        match self.ledger.filename().cmp(&other.ledger.filename()) {
             Ordering::Equal => {}
             x => return x,
         }
@@ -48,7 +48,7 @@ impl<'a> Ord for Location<'a> {
 impl<'a> Location<'a> {
     pub fn from(file: &'a LedgerFile, start_line: u32, end_line: u32) -> Self {
         Self {
-            source: file,
+            ledger: file,
             start_line,
             end_line,
         }
@@ -56,6 +56,10 @@ impl<'a> Location<'a> {
 
     pub fn with_context(&self, lines_context: u32) -> LocationSpan<'a> {
         LocationSpan::from([self.clone()].into_iter(), lines_context).unwrap()
+    }
+
+    pub fn ledger(&self) -> &LedgerFile {
+        self.ledger
     }
 
     pub fn start(&self) -> u32 {
@@ -91,7 +95,7 @@ impl<'a> LocationSpan<'a> {
     ) -> Result<Self, LocationError> {
         let mut locations: Vec<_> = locations.collect();
 
-        let set: HashSet<&LedgerFile> = locations.iter().map(|l| l.source).collect();
+        let set: HashSet<&LedgerFile> = locations.iter().map(|l| l.ledger).collect();
         if set.len() > 1 {
             Err(LocationError::SpanAcrossFiles)
         } else {
@@ -109,7 +113,7 @@ impl<'a> Display for LocationSpan<'a> {
         let first = self.locations.iter().map(|l| l.start()).min().unwrap();
         let last = self.locations.iter().map(|l| l.end()).max().unwrap();
 
-        let source_ledger = self.locations.first().unwrap().source;
+        let source_ledger = self.locations.first().unwrap().ledger;
 
         if first == last {
             writeln!(
@@ -176,7 +180,7 @@ where
 
         // Sort by file first, and line number second.
         locations.sort_by(|a, b| {
-            let first = a.source.filename().cmp(&b.source.filename());
+            let first = a.ledger.filename().cmp(&b.ledger.filename());
             if first == Ordering::Equal {
                 a.start_line.cmp(&b.start_line)
             } else {
@@ -188,16 +192,16 @@ where
         let mut temp = Vec::new();
 
         let mut highest = locations.first().unwrap().start_line + tolerance;
-        let mut previous_file = locations.first().unwrap().source;
+        let mut previous_file = locations.first().unwrap().ledger;
         for location in locations {
-            if location.source == previous_file && location.start_line < highest + tolerance {
+            if location.ledger == previous_file && location.start_line < highest + tolerance {
                 highest = location.end_line;
                 temp.push(location);
             } else {
                 spans.push(LocationSpan::from(temp.iter().cloned(), 1).unwrap());
                 temp.truncate(0);
                 highest = location.end_line;
-                previous_file = location.source;
+                previous_file = location.ledger;
                 temp.push(location);
             }
         }
