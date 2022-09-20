@@ -24,8 +24,8 @@ impl<'a> From<Sourced<'a, Transaction<'a>>> for MissingAppendix<'a> {
 }
 
 impl<'a> From<MissingAppendix<'a>> for Lint<'a> {
-    fn from(duplicate_appendix: MissingAppendix<'a>) -> Self {
-        Lint::MissingAppendix(duplicate_appendix)
+    fn from(missing_appendix: MissingAppendix<'a>) -> Self {
+        Lint::MissingAppendix(missing_appendix)
     }
 }
 
