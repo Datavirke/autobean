@@ -5,11 +5,13 @@ mod lints;
 mod location;
 mod readable;
 
-use std::{process::exit, collections::HashSet};
+use std::{collections::HashMap, process::exit};
 
 use appendix::statement::FromStatementPath;
 use beancount_core::Transaction;
 use clap::{Parser, Subcommand};
+use colored::Colorize;
+use itertools::Itertools;
 use ledger::Ledger;
 use log::{debug, warn, LevelFilter};
 
@@ -90,25 +92,40 @@ fn main() {
         }
         Commands::ListAppendices => {
             // Use a HashSet to uniquely identify each appendix
-            let appendices: HashSet<_> = directives
+            let appendices: HashMap<Appendix, Vec<_>> = directives
                 .iter()
                 .cloned()
                 .filter_map(Transaction::downcast)
                 .filter_map(|transaction| {
                     if let Ok(appendix) = FromStatementPath::from_transaction(transaction.clone()) {
-                        Some(appendix)
+                        Some((appendix, transaction))
                     } else {
                         None
                     }
                 })
-                .collect();
+                .into_group_map();
 
             // Convert to Vec, since HashSets by design are unordered.
             let mut appendices: Vec<_> = appendices.into_iter().collect();
-            appendices.sort_by_key(Appendix::id);
+            appendices.sort_by(|(a, _), (b, _)| a.cmp(b));
 
-            for Appendix { id, statement } in appendices {
-                println!("{id: >8} {statement}");
+            for (Appendix { id, statement }, transactions) in appendices {
+                println!(
+                    "{id: >8} {statement}",
+                    statement = statement.bold().green()
+                );
+                for transaction in transactions {
+                    println!(
+                        "        {ledger}:{line}",
+                        ledger = transaction
+                            .location
+                            .ledger()
+                            .source
+                            .filename()
+                            .to_string_lossy(),
+                        line = transaction.location.start()
+                    );
+                }
             }
         }
     }
