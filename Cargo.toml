@@ -1,6 +1,6 @@
 [package]
 name = "autobean"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -8,15 +8,15 @@ edition = "2021"
 [dependencies]
 pretty_env_logger = "0.4.0"
 log = "0.4.17"
-chrono = { version = "0.4.19", features = ["serde"] }
-serde = { version = "1.0.138", features = ["derive"] }
-itertools = "0.10.3"
-thiserror = "1.0.31"
+chrono = { version = "0.4.22", features = ["serde"] }
+serde = { version = "1.0.144", features = ["derive"] }
+itertools = "0.10.4"
+thiserror = "1.0.35"
 colored = "2.0.0"
-unindent = "0.1.9"
-regex = "1.5.6"
-once_cell = "1.12.0"
-clap = { version = "3.2.8", features = ["derive"] }
+unindent = "0.1.10"
+regex = "1.6.0"
+once_cell = "1.14.0"
+clap = { version = "3.2.22", features = ["derive"] }
 beancount-core = { git = "https://github.com/twilco/beancount" }
 beancount-parser = { git = "https://github.com/twilco/beancount" }
 beancount-render = { git = "https://github.com/twilco/beancount" }
