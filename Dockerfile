@@ -1,7 +1,7 @@
 # Based on: https://levelup.gitconnected.com/create-an-optimized-rust-alpine-docker-image-1940db638a6c
 
 ##### Builder
-FROM rust:1.62.0-slim as builder
+FROM rust:1.71.0-slim as builder
 
 WORKDIR /usr/src
 
@@ -33,12 +33,12 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cp /usr/src/autobean/target/x86_64-unknown-linux-musl/release/autobean /usr/local/bin
 
 ##### Runtime
-FROM alpine:3.16.0 AS runtime 
+FROM scratch AS runtime 
 
-COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /usr/local/bin /
 
 VOLUME /data
 WORKDIR /data
 
-ENTRYPOINT ["/usr/local/bin/autobean"]
+ENTRYPOINT ["/autobean"]
 CMD ["/data"]
