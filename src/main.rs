@@ -22,19 +22,19 @@ use crate::{
 
 /// Lints beancount files in a directory
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[command(author, version, about, long_about = None)]
 struct Args {
     /// Path in which to look for *.beancount files.
     /// Defaults to working directory.
-    #[clap(value_parser, default_value_t = String::from("."))]
+    #[arg(default_value_t = String::from("."))]
     path: String,
 
     /// Debug level for the application logger. One of:
     /// off, error, warn, info, debug or trace
-    #[clap(short, long, value_parser, default_value_t = LevelFilter::Off)]
+    #[arg(short, long, default_value_t = LevelFilter::Off)]
     debug: LevelFilter,
 
-    #[clap(subcommand)]
+    #[command(subcommand)]
     command: Commands,
 }
 
@@ -110,10 +110,7 @@ fn main() {
             appendices.sort_by(|(a, _), (b, _)| a.cmp(b));
 
             for (Appendix { id, statement }, transactions) in appendices {
-                println!(
-                    "{id: >8} {statement}",
-                    statement = statement.bold().green()
-                );
+                println!("{id: >8} {statement}", statement = statement.bold().green());
                 for transaction in transactions {
                     println!(
                         "        {ledger}:{line}",
