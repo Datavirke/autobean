@@ -1,6 +1,6 @@
 [package]
 name = "autobean"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 pretty_env_logger = "0.5"
 log = "0.4"
-chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 itertools = "0.11"
 thiserror = "1"

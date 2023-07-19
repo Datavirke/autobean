@@ -113,7 +113,7 @@ fn main() {
                 println!("{id: >8} {statement}", statement = statement.bold().green());
                 for transaction in transactions {
                     println!(
-                        "        {ledger}:{line}",
+                        "       ↳ {ledger}:{line}",
                         ledger = transaction
                             .location
                             .ledger()
@@ -123,6 +123,7 @@ fn main() {
                         line = transaction.location.start()
                     );
                 }
+                println!("");
             }
         }
     }
