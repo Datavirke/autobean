@@ -183,7 +183,7 @@ fn main() {
                 std::fs::copy(&statement, destination).unwrap();
             }
 
-            let initial_balance = apply_style(balance(&ledger, Some(year)), style);
+            let initial_balance = apply_style(balance(&ledger, Some(year - 1)), style);
             let final_balance = apply_style(balance(&ledger, Some(year)), style);
 
             std::fs::write(
