@@ -1,22 +1,26 @@
+mod annual;
 mod appendix;
+mod balance;
 mod error;
 mod ledger;
 mod lints;
 mod location;
 mod readable;
 
-use std::{collections::HashMap, process::exit};
+use std::{collections::HashMap, path::PathBuf, process::exit};
 
 use appendix::statement::FromStatementPath;
 use beancount_core::Transaction;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use colored::Colorize;
 use itertools::Itertools;
 use ledger::Ledger;
 use log::{debug, warn, LevelFilter};
+use tabled::settings::Style;
 
 use crate::{
     appendix::{Appendix, AppendixExtractor},
+    balance::balance,
     ledger::Downcast,
 };
 
@@ -38,12 +42,43 @@ struct Args {
     command: Commands,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, ValueEnum)]
+enum TableStyle {
+    #[default]
+    Blank,
+    Ascii,
+    Modern,
+    Dots,
+    Markdown,
+    Psql,
+}
+
 #[derive(Debug, Subcommand)]
-pub enum Commands {
+enum Commands {
     /// Check ledger for all lints.
     Check,
     /// List all appendices listed in the ledger.
     ListAppendices,
+    /// Produce a complete accounting of the given year.
+    AnnualAccounts {
+        /// Year whose transactions are to be considered.
+        #[arg(long, short)]
+        year: usize,
+        /// Style of the output table
+        #[arg(long, short, value_enum, default_value_t = TableStyle::Blank)]
+        style: TableStyle,
+    },
+    /// Generate a list of balances, optionally up to and
+    /// including a given year. If not provided, returns
+    /// the current balance.
+    Balance {
+        /// Include all transactions up to and including this year
+        #[arg(long, short = 'y')]
+        up_to_and_including: Option<usize>,
+        /// Style of the output table
+        #[arg(long, short, value_enum, default_value_t = TableStyle::Blank)]
+        style: TableStyle,
+    },
 }
 
 fn main() {
@@ -125,6 +160,62 @@ fn main() {
                 }
                 println!("");
             }
+        }
+        Commands::Balance {
+            up_to_and_including,
+            style,
+        } => {
+            let mut table = balance::balance(&ledger, up_to_and_including);
+
+            match style {
+                TableStyle::Blank => table.with(Style::blank()),
+                TableStyle::Ascii => table.with(Style::ascii()),
+                TableStyle::Modern => table.with(Style::modern()),
+                TableStyle::Dots => table.with(Style::dots()),
+                TableStyle::Markdown => table.with(Style::markdown()),
+                TableStyle::Psql => table.with(Style::psql()),
+            };
+
+            println!("{}", table);
+        }
+        Commands::AnnualAccounts { year, style } => {
+            let (mut table, statements) = annual::accounts(&ledger, year);
+
+            match style {
+                TableStyle::Blank => table.with(Style::blank()),
+                TableStyle::Ascii => table.with(Style::ascii()),
+                TableStyle::Modern => table.with(Style::modern()),
+                TableStyle::Dots => table.with(Style::dots()),
+                TableStyle::Markdown => table.with(Style::markdown()),
+                TableStyle::Psql => table.with(Style::psql()),
+            };
+
+            let output_path = PathBuf::from(year.to_string());
+            std::fs::remove_dir_all(&output_path).ok();
+            std::fs::create_dir_all(&output_path.join("bilag")).unwrap();
+            for statement in statements {
+                let destination = output_path
+                    .join("bilag")
+                    .join(statement.file_name().unwrap());
+                std::fs::copy(&statement, destination).unwrap();
+            }
+
+            let initial_balance = balance(&ledger, Some(year));
+            let final_balance = balance(&ledger, Some(year));
+
+            std::fs::write(
+                output_path.join("start-balance.txt"),
+                initial_balance.to_string(),
+            )
+            .unwrap();
+
+            std::fs::write(
+                output_path.join("slut-balance.txt"),
+                final_balance.to_string(),
+            )
+            .unwrap();
+
+            std::fs::write(output_path.join("poster.txt"), table.to_string()).unwrap();
         }
     }
 }
