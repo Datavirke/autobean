@@ -16,7 +16,7 @@ use colored::Colorize;
 use itertools::Itertools;
 use ledger::Ledger;
 use log::{debug, warn, LevelFilter};
-use tabled::settings::Style;
+use tabled::{settings::Style, Table};
 
 use crate::{
     appendix::{Appendix, AppendixExtractor},
@@ -165,30 +165,13 @@ fn main() {
             up_to_and_including,
             style,
         } => {
-            let mut table = balance::balance(&ledger, up_to_and_including);
-
-            match style {
-                TableStyle::Blank => table.with(Style::blank()),
-                TableStyle::Ascii => table.with(Style::ascii()),
-                TableStyle::Modern => table.with(Style::modern()),
-                TableStyle::Dots => table.with(Style::dots()),
-                TableStyle::Markdown => table.with(Style::markdown()),
-                TableStyle::Psql => table.with(Style::psql()),
-            };
+            let table = apply_style(balance::balance(&ledger, up_to_and_including), style);
 
             println!("{}", table);
         }
         Commands::AnnualAccounts { year, style } => {
-            let (mut table, statements) = annual::accounts(&ledger, year);
-
-            match style {
-                TableStyle::Blank => table.with(Style::blank()),
-                TableStyle::Ascii => table.with(Style::ascii()),
-                TableStyle::Modern => table.with(Style::modern()),
-                TableStyle::Dots => table.with(Style::dots()),
-                TableStyle::Markdown => table.with(Style::markdown()),
-                TableStyle::Psql => table.with(Style::psql()),
-            };
+            let (table, statements) = annual::accounts(&ledger, year);
+            let table = apply_style(table, style);
 
             let output_path = PathBuf::from(year.to_string());
             std::fs::remove_dir_all(&output_path).ok();
@@ -200,22 +183,30 @@ fn main() {
                 std::fs::copy(&statement, destination).unwrap();
             }
 
-            let initial_balance = balance(&ledger, Some(year));
-            let final_balance = balance(&ledger, Some(year));
+            let initial_balance = apply_style(balance(&ledger, Some(year)), style);
+            let final_balance = apply_style(balance(&ledger, Some(year)), style);
 
             std::fs::write(
-                output_path.join("start-balance.txt"),
+                output_path.join("startsaldo.txt"),
                 initial_balance.to_string(),
             )
             .unwrap();
 
-            std::fs::write(
-                output_path.join("slut-balance.txt"),
-                final_balance.to_string(),
-            )
-            .unwrap();
+            std::fs::write(output_path.join("slutsaldo.txt"), final_balance.to_string()).unwrap();
 
             std::fs::write(output_path.join("poster.txt"), table.to_string()).unwrap();
         }
     }
+}
+
+fn apply_style(mut table: Table, style: TableStyle) -> Table {
+    match style {
+        TableStyle::Blank => table.with(Style::blank()),
+        TableStyle::Ascii => table.with(Style::ascii()),
+        TableStyle::Modern => table.with(Style::modern()),
+        TableStyle::Dots => table.with(Style::dots()),
+        TableStyle::Markdown => table.with(Style::markdown()),
+        TableStyle::Psql => table.with(Style::psql()),
+    };
+    table
 }
