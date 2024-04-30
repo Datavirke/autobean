@@ -123,13 +123,15 @@ pub fn balance(ledger: &Ledger, up_to_and_including: Option<usize>) -> Table {
 }
 
 fn tabled_balance<'a>(balances: impl Iterator<Item = (&'a Account<'a>, &'a Decimal)>) -> Table {
-    let mut table = Table::new(
-        balances
-            .filter(|item| !item.1.round_dp(2).is_zero())
-            .filter(|item| item.0.ty != AccountType::Income)
-            .filter(|item| item.0.ty != AccountType::Expenses)
-            .map(Balance),
-    );
+    let mut balances: Vec<_> = balances
+        .filter(|item| !item.1.round_dp(2).is_zero())
+        .filter(|item| item.0.ty != AccountType::Income)
+        .filter(|item| item.0.ty != AccountType::Expenses)
+        .map(Balance)
+        .collect();
+    balances.sort_by_key(|balance| balance.name());
+
+    let mut table = Table::new(balances);
 
     table.modify(Columns::last(), Alignment::right());
     table
