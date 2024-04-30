@@ -1,7 +1,7 @@
 # Based on: https://levelup.gitconnected.com/create-an-optimized-rust-alpine-docker-image-1940db638a6c
 
 ##### Builder
-FROM rust:1.71.0-slim as builder
+FROM rust:1.75.0-slim as builder
 
 WORKDIR /usr/src
 
